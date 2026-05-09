@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
+    QGraphicsDropShadowEffect,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -24,7 +26,7 @@ def create_workbench_window(snapshot: WorkbenchSnapshot) -> QMainWindow:
     window = QMainWindow()
     window.setObjectName("workbench_window")
     window.setWindowTitle("接口编排自动化测试工具")
-    window.resize(1280, 760)
+    window.resize(1360, 820)
     _apply_styles(window)
 
     toolbar = QToolBar("全局操作")
@@ -44,7 +46,7 @@ def create_workbench_window(snapshot: WorkbenchSnapshot) -> QMainWindow:
     shell_layout.setContentsMargins(0, 0, 0, 0)
     shell_layout.setSpacing(0)
     shell_layout.addWidget(_navigation_panel(snapshot))
-    shell_layout.addWidget(_main_scroll_area())
+    shell_layout.addWidget(_main_scroll_area(snapshot))
     shell_layout.addWidget(_details_panel(snapshot))
     window.setCentralWidget(shell)
 
@@ -60,35 +62,35 @@ def create_workbench_window(snapshot: WorkbenchSnapshot) -> QMainWindow:
 def _navigation_panel(snapshot: WorkbenchSnapshot) -> QWidget:
     panel = QWidget()
     panel.setObjectName("navigation_panel")
-    panel.setFixedWidth(236)
+    panel.setFixedWidth(250)
     layout = QVBoxLayout(panel)
-    layout.setContentsMargins(18, 22, 18, 18)
-    layout.setSpacing(14)
+    layout.setContentsMargins(22, 26, 18, 22)
+    layout.setSpacing(16)
 
     brand = QFrame()
     brand.setObjectName("brand_panel")
     brand_layout = QHBoxLayout(brand)
     brand_layout.setContentsMargins(0, 0, 0, 0)
     brand_layout.setSpacing(10)
-    mark = QLabel("测")
+    mark = QLabel("回")
     mark.setObjectName("brand_mark")
-    title = QLabel("接口编排回归")
+    title = QLabel("流程回归")
     title.setProperty("role", "nav_title")
     brand_layout.addWidget(mark)
     brand_layout.addWidget(title, 1)
     layout.addWidget(brand)
 
-    env_badge = QLabel(f"{snapshot.environment.display_name} · {snapshot.connection.message}")
+    env_badge = QLabel(f"{snapshot.environment.display_name}\n{snapshot.connection.message}")
     env_badge.setObjectName("environment_badge")
     env_badge.setWordWrap(True)
     layout.addWidget(env_badge)
 
     layout.addSpacing(8)
-    layout.addWidget(_nav_button("流程回归", selected=True))
-    layout.addWidget(_nav_button("账号会话"))
+    layout.addWidget(_nav_button("工作台", selected=True))
+    layout.addWidget(_nav_button("发起账号"))
+    layout.addWidget(_nav_button("流程库"))
     layout.addWidget(_nav_button("节点配置"))
-    layout.addWidget(_nav_button("运行记录"))
-    layout.addWidget(_nav_button("报告中心"))
+    layout.addWidget(_nav_button("运行报告"))
     layout.addStretch()
 
     footer = QLabel("本地开发验证工作台")
@@ -97,7 +99,7 @@ def _navigation_panel(snapshot: WorkbenchSnapshot) -> QWidget:
     return panel
 
 
-def _main_scroll_area() -> QScrollArea:
+def _main_scroll_area(snapshot: WorkbenchSnapshot) -> QScrollArea:
     scroll_area = QScrollArea()
     scroll_area.setObjectName("main_panel")
     scroll_area.setWidgetResizable(True)
@@ -107,10 +109,11 @@ def _main_scroll_area() -> QScrollArea:
     content = QWidget()
     content.setObjectName("main_content")
     layout = QVBoxLayout(content)
-    layout.setContentsMargins(28, 24, 28, 24)
-    layout.setSpacing(18)
+    layout.setContentsMargins(30, 28, 30, 28)
+    layout.setSpacing(20)
 
     layout.addWidget(_page_header())
+    layout.addWidget(_hero_panel(snapshot))
     layout.addWidget(_metric_grid())
     layout.addWidget(_starter_account_section())
     layout.addWidget(_flow_selection_section())
@@ -123,11 +126,13 @@ def _main_scroll_area() -> QScrollArea:
 
 def _page_header() -> QWidget:
     header = QWidget()
+    header.setObjectName("page_header")
     layout = QHBoxLayout(header)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(16)
 
     copy = QWidget()
+    copy.setObjectName("page_header_copy")
     copy_layout = QVBoxLayout(copy)
     copy_layout.setContentsMargins(0, 0, 0, 0)
     copy_layout.setSpacing(6)
@@ -149,8 +154,55 @@ def _page_header() -> QWidget:
     return header
 
 
+def _hero_panel(snapshot: WorkbenchSnapshot) -> QFrame:
+    hero = QFrame()
+    hero.setObjectName("hero_panel")
+    _add_shadow(hero, blur=34, y_offset=16, alpha=28)
+    layout = QHBoxLayout(hero)
+    layout.setContentsMargins(28, 24, 28, 24)
+    layout.setSpacing(28)
+
+    copy = QWidget()
+    copy.setObjectName("hero_copy")
+    copy_layout = QVBoxLayout(copy)
+    copy_layout.setContentsMargins(0, 0, 0, 0)
+    copy_layout.setSpacing(12)
+    eyebrow = QLabel("推荐回归起点")
+    eyebrow.setProperty("role", "hero_eyebrow")
+    title = QLabel("从欧阳改开始，快速拉起全流程回归")
+    title.setProperty("role", "hero_title")
+    title.setWordWrap(True)
+    desc = QLabel("先查询账号可发起流程，再按真实节点配置审核人员、部门、岗位和候选范围。")
+    desc.setProperty("role", "hero_desc")
+    desc.setWordWrap(True)
+    copy_layout.addWidget(eyebrow)
+    copy_layout.addWidget(title)
+    copy_layout.addWidget(desc)
+    copy_layout.addWidget(_chip_row(("默认超级账号", "会话统一管理", snapshot.environment.display_name)))
+    copy_layout.addStretch()
+
+    actions = _action_row("开始查询", "选择其他账号")
+    actions.setObjectName("hero_actions")
+    copy_layout.addWidget(actions)
+
+    stage = QFrame()
+    stage.setObjectName("hero_stage")
+    stage_layout = QVBoxLayout(stage)
+    stage_layout.setContentsMargins(18, 18, 18, 18)
+    stage_layout.setSpacing(12)
+    stage_layout.addWidget(_stage_line("发起账号", "欧阳改", active=True))
+    stage_layout.addWidget(_stage_line("流程解析", "等待选择流程"))
+    stage_layout.addWidget(_stage_line("分支执行", "按节点配置并发"))
+    stage_layout.addStretch()
+
+    layout.addWidget(copy, 3)
+    layout.addWidget(stage, 2)
+    return hero
+
+
 def _metric_grid() -> QWidget:
     grid_panel = QWidget()
+    grid_panel.setObjectName("metric_grid")
     layout = QGridLayout(grid_panel)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setHorizontalSpacing(12)
@@ -287,6 +339,7 @@ def _section(
     frame = QFrame()
     frame.setObjectName(object_name)
     frame.setProperty("role", "section_card")
+    _add_shadow(frame, blur=22, y_offset=10, alpha=18)
     layout = QVBoxLayout(frame)
     margin = 14 if compact else 18
     layout.setContentsMargins(margin, margin, margin, margin)
@@ -308,6 +361,7 @@ def _section(
 def _metric_card(label: str, value: str, hint: str) -> QFrame:
     card = QFrame()
     card.setProperty("role", "metric_card")
+    _add_shadow(card, blur=18, y_offset=8, alpha=18)
     card.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
     layout = QVBoxLayout(card)
     layout.setContentsMargins(14, 12, 14, 12)
@@ -385,6 +439,30 @@ def _node_rule(title: str, description: str) -> QFrame:
     return row
 
 
+def _stage_line(label: str, value: str, *, active: bool = False) -> QFrame:
+    row = QFrame()
+    row.setProperty("role", "stage_line_active" if active else "stage_line")
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(12, 10, 12, 10)
+    layout.setSpacing(10)
+    marker = QLabel("●" if active else "○")
+    marker.setProperty("role", "stage_marker")
+    copy = QWidget()
+    copy.setObjectName("stage_copy")
+    copy_layout = QVBoxLayout(copy)
+    copy_layout.setContentsMargins(0, 0, 0, 0)
+    copy_layout.setSpacing(2)
+    label_widget = QLabel(label)
+    label_widget.setProperty("role", "stage_label")
+    value_widget = QLabel(value)
+    value_widget.setProperty("role", "stage_value")
+    copy_layout.addWidget(label_widget)
+    copy_layout.addWidget(value_widget)
+    layout.addWidget(marker)
+    layout.addWidget(copy, 1)
+    return row
+
+
 def _detail_lines(lines: tuple[tuple[str, str], ...]) -> QWidget:
     panel = QWidget()
     panel.setObjectName("detail_lines")
@@ -416,11 +494,25 @@ def _nav_button(text: str, *, selected: bool = False) -> QPushButton:
     return button
 
 
+def _add_shadow(
+    widget: QWidget,
+    *,
+    blur: int,
+    y_offset: int,
+    alpha: int,
+) -> None:
+    shadow = QGraphicsDropShadowEffect(widget)
+    shadow.setBlurRadius(blur)
+    shadow.setOffset(0, y_offset)
+    shadow.setColor(QColor(32, 80, 72, alpha))
+    widget.setGraphicsEffect(shadow)
+
+
 def _apply_styles(window: QMainWindow) -> None:
     window.setStyleSheet(
         """
         QMainWindow#workbench_window {
-            background: #edf1f5;
+            background: #f4fbf8;
             font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
         }
         QToolBar#global_toolbar {
@@ -442,62 +534,97 @@ def _apply_styles(window: QMainWindow) -> None:
             border-color: #b9cee6;
         }
         QWidget#navigation_panel {
-            background: #182235;
-            border-right: 1px solid #101827;
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #eafff8, stop:0.58 #f9fffc, stop:1 #eef7ff);
+            border-right: 1px solid rgba(160, 210, 195, 0.45);
         }
         QFrame#brand_panel {
             border: 0;
             background: transparent;
         }
         QLabel#brand_mark {
-            min-width: 36px;
-            min-height: 36px;
-            max-width: 36px;
-            max-height: 36px;
-            border-radius: 10px;
-            background: #2dd4bf;
-            color: #082f3d;
-            font-size: 19px;
+            min-width: 42px;
+            min-height: 42px;
+            max-width: 42px;
+            max-height: 42px;
+            border-radius: 21px;
+            background: #1ed760;
+            color: #052e19;
+            font-size: 20px;
             font-weight: 800;
             qproperty-alignment: AlignCenter;
         }
         QLabel[role="nav_title"] {
-            color: #f8fafc;
-            font-size: 17px;
+            color: #10231d;
+            font-size: 19px;
             font-weight: 800;
             background: transparent;
         }
         QLabel#environment_badge {
-            color: #b8c7d9;
-            background: #22304a;
-            border: 1px solid #304260;
-            border-radius: 8px;
-            padding: 9px 10px;
+            color: #427064;
+            background: rgba(255, 255, 255, 0.68);
+            border: 1px solid rgba(155, 216, 196, 0.72);
+            border-radius: 16px;
+            padding: 11px 13px;
             line-height: 18px;
         }
         QPushButton[role="nav_button"] {
             text-align: left;
-            color: #c8d3e2;
+            color: #42635b;
             background: transparent;
             border: 0;
-            border-radius: 8px;
-            padding: 11px 12px;
-            font-weight: 600;
+            border-radius: 18px;
+            padding: 12px 16px;
+            font-weight: 800;
         }
         QPushButton[role="nav_button"]:checked {
-            color: #ffffff;
-            background: #2563eb;
+            color: #073c26;
+            background: #d8f8eb;
         }
         QPushButton[role="nav_button"]:hover {
-            background: #253653;
+            background: rgba(216, 248, 235, 0.65);
         }
         QLabel#nav_footer {
-            color: #7d8ca3;
+            color: #7a9a91;
             background: transparent;
         }
         QScrollArea#main_panel,
         QWidget#main_content {
-            background: #edf1f5;
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #f4fbf8, stop:0.52 #f7fbff, stop:1 #eef8f5);
+        }
+        QFrame#hero_panel {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #18d07c, stop:0.56 #25d7c0, stop:1 #6bdcff);
+            border: 0;
+            border-radius: 28px;
+        }
+        QWidget#page_header,
+        QWidget#page_header_copy,
+        QWidget#metric_grid {
+            background: transparent;
+        }
+        QWidget#hero_copy,
+        QWidget#stage_copy {
+            background: transparent;
+        }
+        QFrame#hero_stage {
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.58);
+            border-radius: 22px;
+        }
+        QLabel[role="hero_eyebrow"] {
+            color: rgba(4, 45, 32, 0.72);
+            background: transparent;
+            font-weight: 900;
+        }
+        QLabel[role="hero_title"] {
+            color: #03251a;
+            background: transparent;
+            font-size: 30px;
+            font-weight: 900;
+        }
+        QLabel[role="hero_desc"] {
+            color: rgba(3, 37, 26, 0.78);
+            background: transparent;
+            font-size: 14px;
         }
         QFrame[role="section_card"] QWidget,
         QWidget[role="section_content"],
@@ -508,66 +635,66 @@ def _apply_styles(window: QMainWindow) -> None:
             background-color: transparent;
         }
         QWidget#details_panel {
-            background: #f8fafc;
-            border-left: 1px solid #d9e1eb;
+            background: rgba(250, 255, 253, 0.94);
+            border-left: 1px solid rgba(178, 219, 205, 0.48);
         }
         QLabel[role="page_title"] {
-            color: #111827;
-            font-size: 24px;
+            color: #10231d;
+            font-size: 26px;
             font-weight: 900;
             background: transparent;
         }
         QLabel[role="page_subtitle"] {
-            color: #5d6b7c;
+            color: #638077;
             font-size: 13px;
             background: transparent;
         }
         QLabel[role="panel_title"] {
-            color: #111827;
+            color: #10231d;
             font-size: 17px;
             font-weight: 900;
             background: transparent;
         }
         QPushButton#primary_button {
-            color: #ffffff;
-            background: #0f766e;
+            color: #052e19;
+            background: #1ed760;
             border: 0;
-            border-radius: 8px;
-            padding: 10px 18px;
+            border-radius: 18px;
+            padding: 11px 22px;
             font-weight: 800;
         }
         QPushButton#secondary_button,
         QPushButton[role="action_button"] {
-            color: #25344a;
-            background: #ffffff;
-            border: 1px solid #d6e0eb;
-            border-radius: 8px;
+            color: #214139;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(186, 221, 211, 0.82);
+            border-radius: 18px;
             padding: 9px 14px;
             font-weight: 700;
         }
         QPushButton#primary_inline_button {
-            color: #ffffff;
-            background: #2563eb;
-            border-color: #2563eb;
+            color: #052e19;
+            background: #1ed760;
+            border-color: #1ed760;
         }
         QFrame[role="section_card"],
         QFrame[role="metric_card"] {
-            background: #ffffff;
-            border: 1px solid #dce5ef;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(206, 230, 223, 0.70);
+            border-radius: 20px;
         }
         QFrame[role="section_card"] {
-            border-top: 3px solid #0f766e;
+            border-top: 4px solid #1ed760;
         }
         QLabel[role="section_title"] {
-            color: #111827;
-            font-size: 15px;
+            color: #10231d;
+            font-size: 16px;
             font-weight: 900;
             border: 0;
             background: transparent;
         }
         QLabel[role="section_body"] {
-            color: #5b6778;
+            color: #657c75;
             border: 0;
             background: transparent;
             line-height: 19px;
@@ -579,41 +706,41 @@ def _apply_styles(window: QMainWindow) -> None:
             background: transparent;
         }
         QLabel[role="metric_value"] {
-            color: #111827;
-            font-size: 21px;
+            color: #10231d;
+            font-size: 23px;
             font-weight: 900;
             background: transparent;
         }
         QLabel[role="detail_value"] {
-            color: #1f2937;
+            color: #17382f;
             font-weight: 700;
             background: transparent;
         }
         QLabel[role="field_label"] {
-            color: #4b5870;
+            color: #4e7168;
             font-weight: 800;
             background: transparent;
         }
         QComboBox {
-            color: #182235;
-            background: #f8fafc;
-            border: 1px solid #d4deea;
-            border-radius: 8px;
+            color: #17382f;
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(198, 223, 216, 0.92);
+            border-radius: 16px;
             padding: 8px 10px;
-            min-height: 22px;
+            min-height: 26px;
         }
         QLabel[role="chip"] {
-            color: #0f3f3d;
-            background: #dff7f2;
-            border: 1px solid #b7e8dc;
-            border-radius: 10px;
-            padding: 5px 9px;
+            color: #064e3b;
+            background: rgba(226, 255, 244, 0.82);
+            border: 1px solid rgba(142, 229, 200, 0.82);
+            border-radius: 14px;
+            padding: 6px 11px;
             font-weight: 700;
         }
         QFrame[role="node_rule"] {
-            background: #f8fafc;
-            border: 1px solid #e1e8f0;
-            border-radius: 9px;
+            background: rgba(247, 253, 250, 0.86);
+            border: 1px solid rgba(211, 232, 226, 0.94);
+            border-radius: 16px;
         }
         QLabel[role="status_dot"] {
             min-width: 10px;
@@ -623,19 +750,44 @@ def _apply_styles(window: QMainWindow) -> None:
             border-radius: 5px;
             background: #f59e0b;
         }
+        QFrame[role="stage_line"],
+        QFrame[role="stage_line_active"] {
+            background: rgba(255, 255, 255, 0.58);
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            border-radius: 16px;
+        }
+        QFrame[role="stage_line_active"] {
+            background: rgba(255, 255, 255, 0.86);
+        }
+        QLabel[role="stage_marker"] {
+            color: #10b981;
+            background: transparent;
+            font-size: 18px;
+        }
+        QLabel[role="stage_label"] {
+            color: #4b6b62;
+            background: transparent;
+            font-weight: 800;
+        }
+        QLabel[role="stage_value"] {
+            color: #10231d;
+            background: transparent;
+            font-size: 15px;
+            font-weight: 900;
+        }
         QLabel[role="node_title"] {
-            color: #172033;
+            color: #17382f;
             font-weight: 900;
             background: transparent;
         }
         QLabel[role="node_desc"] {
-            color: #5d6b7c;
+            color: #657c75;
             background: transparent;
         }
         QStatusBar#status_bar {
-            background: #ffffff;
-            color: #374151;
-            border-top: 1px solid #d9e1eb;
+            background: rgba(255, 255, 255, 0.92);
+            color: #4f6d65;
+            border-top: 1px solid rgba(193, 221, 213, 0.75);
         }
         """
     )
