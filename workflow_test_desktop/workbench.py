@@ -24,6 +24,7 @@ class LayoutSnapshot:
 @dataclass(frozen=True)
 class EnvironmentSnapshot:
     env_name: str
+    display_name: str
     api_gateway: str
 
 
@@ -39,6 +40,7 @@ class WorkbenchSnapshot:
     layout: LayoutSnapshot
     environment: EnvironmentSnapshot
     connection: ConnectionSnapshot
+    status_text: str
 
 
 def load_environment_config(
@@ -97,9 +99,11 @@ def build_workbench_snapshot(config: EnvironmentConfig) -> WorkbenchSnapshot:
         ),
         environment=EnvironmentSnapshot(
             env_name=config.env_name,
+            display_name=_environment_display_name(config.env_name),
             api_gateway=config.api_gateway,
         ),
         connection=connection,
+        status_text=_status_text(config, connection),
     )
 
 
@@ -112,3 +116,20 @@ def _read_env_file(env_file: Path) -> dict[str, str]:
         key, value = line.split("=", 1)
         values[key.strip()] = value.strip()
     return values
+
+
+def _environment_display_name(env_name: str) -> str:
+    names = {
+        "local-dry-run": "本地演示环境",
+        "dev-test": "开发测试环境",
+    }
+    return names.get(env_name, env_name or "未命名环境")
+
+
+def _status_text(config: EnvironmentConfig, connection: ConnectionSnapshot) -> str:
+    gateway = config.api_gateway or "未配置"
+    return (
+        f"环境：{_environment_display_name(config.env_name)} | "
+        f"网关：{gateway} | "
+        f"状态：{connection.message}"
+    )

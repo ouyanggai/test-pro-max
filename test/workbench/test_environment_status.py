@@ -19,10 +19,24 @@ def test_workbench_shows_layout_and_environment_without_leaking_secret_values():
     assert snapshot.layout.toolbar_height_px == 32
     assert snapshot.layout.status_bar_height_px == 24
     assert snapshot.environment.env_name == "local-dry-run"
+    assert snapshot.environment.display_name == "本地演示环境"
     assert snapshot.environment.api_gateway == "http://127.0.0.1:38081/api"
     assert snapshot.connection.status == "missing_secrets"
     assert snapshot.connection.missing_secret_names == ("NACOS_TOKEN",)
     assert "super-secret-password" not in snapshot.connection.message
+
+
+def test_workbench_snapshot_uses_chinese_environment_display_name():
+    config = EnvironmentConfig(
+        env_name="local-dry-run",
+        api_gateway="http://127.0.0.1:38081/api",
+    )
+
+    snapshot = build_workbench_snapshot(config)
+
+    assert snapshot.environment.display_name == "本地演示环境"
+    assert "dry-run" not in snapshot.status_text
+    assert snapshot.status_text == "环境：本地演示环境 | 网关：http://127.0.0.1:38081/api | 状态：环境连接尚未检查"
 
 
 def test_workbench_reports_unconfigured_when_api_gateway_is_blank():

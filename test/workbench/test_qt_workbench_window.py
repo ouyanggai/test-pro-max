@@ -27,5 +27,10 @@ def test_qt_workbench_window_exposes_required_regions():
     assert window.findChild(object, "details_panel") is not None
     assert window.findChild(object, "global_toolbar") is not None
     assert window.findChild(object, "status_bar") is not None
-    assert "local-dry-run" in window.statusBar().currentMessage()
+    assert window.findChild(object, "starter_account_section") is not None
+    assert window.findChild(object, "flow_selection_section") is not None
+    assert window.findChild(object, "review_node_section") is not None
+    assert window.findChild(object, "environment_status_section") is not None
+    assert "本地演示环境" in window.statusBar().currentMessage()
+    assert "dry-run" not in window.statusBar().currentMessage()
     assert "环境连接正常" in window.statusBar().currentMessage()

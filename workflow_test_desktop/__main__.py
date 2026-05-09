@@ -6,6 +6,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
+from qt_material import apply_stylesheet
 
 from workflow_test_desktop.qt_workbench import create_workbench_window
 from workflow_test_desktop.workbench import (
@@ -30,6 +31,7 @@ def main() -> int:
         config = load_environment_config(_empty_env_file())
 
     app = QApplication.instance() or QApplication([])
+    apply_stylesheet(app, theme="light_blue.xml")
     window = create_workbench_window(build_workbench_snapshot(config))
     window.show()
 
