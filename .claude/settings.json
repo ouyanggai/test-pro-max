@@ -1,7 +1,4 @@
 {
-  "enabledMcpjsonServers": [
-    "apifox-project"
-  ],
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true
   }
