@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "apifox-project": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "apifox-mcp-server@latest",
+        "--project-id=8237227"
+      ],
+      "env": {
+        "APIFOX_ACCESS_TOKEN": "APS-bP6Azlqvmd8tuXGgBOr15Lubk3TYaBGP"
+      }
+    }
+  }
+}
