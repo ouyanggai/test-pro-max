@@ -109,7 +109,7 @@ class StepNodes(QWidget):
 
         # 否则从 API 加载
         async def _fetch():
-            gateway = self._config.get("GATEWAY_URL", "")
+            gateway = self._config.gateway_url
             if not gateway:
                 return
             try:

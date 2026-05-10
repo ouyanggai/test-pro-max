@@ -101,7 +101,6 @@ QPushButton {{
     font-family: inherit;
     font-size: 14px;
     font-weight: 500;
-    cursor: pointer;
     background-color: {t.bg_secondary};
     color: {t.text_primary};
 }}
@@ -144,7 +143,6 @@ QPushButton[theme="danger"]:hover {{
 QPushButton:disabled {{
     background-color: {t.bg_secondary};
     color: {t.text_secondary};
-    cursor: not-allowed;
 }}
 
 /* ===== 输入框样式 ===== */
@@ -332,7 +330,7 @@ RADIUS_CARD = "12px"
 RADIUS_MODAL = "16px"
 
 # 字体规范
-FONT_FAMILY = "system-ui, -apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, sans-serif"
+FONT_FAMILY = "-apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, sans-serif"
 
 # 间距规范（整数，Qt 布局用）
 SPACE_XS_PX = 4

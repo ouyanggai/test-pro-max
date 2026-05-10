@@ -109,7 +109,7 @@ class StepAccount(QWidget):
     def _load_users_from_api(self):
         """从 API 加载用户列表用于模糊匹配"""
         async def _fetch():
-            gateway = self._config.get("GATEWAY_URL", "")
+            gateway = self._config.gateway_url
             if not gateway:
                 logger.warning("[StepAccount] GATEWAY_URL 未配置，跳过加载用户列表")
                 return

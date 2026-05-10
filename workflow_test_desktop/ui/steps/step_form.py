@@ -106,7 +106,7 @@ class StepForm(QWidget):
         self._empty_hint.setVisible(False)
 
         async def _fetch():
-            gateway = self._config.get("GATEWAY_URL", "")
+            gateway = self._config.gateway_url
             if not gateway:
                 ErrorBus().emit(
                     "配置错误",
