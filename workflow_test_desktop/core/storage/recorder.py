@@ -104,3 +104,29 @@ class RunRecorder:
             {"limit": limit},
         )
         return rows
+
+    async def log_session(
+        self,
+        run_id: int,
+        env_id: str,
+        login_type: str,
+        username: str,
+        generation: int,
+        action: str,
+        reason: str,
+    ) -> None:
+        """记录会话日志（登录/重登/失效）"""
+        await self._db.execute(
+            """INSERT INTO session_logs
+               (run_id, env_id, login_type, username, generation, action, reason)
+               VALUES (:run_id, :env_id, :login_type, :username, :generation, :action, :reason)""",
+            {
+                "run_id": run_id,
+                "env_id": env_id,
+                "login_type": login_type,
+                "username": username,
+                "generation": generation,
+                "action": action,
+                "reason": reason,
+            },
+        )

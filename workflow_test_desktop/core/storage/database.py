@@ -60,6 +60,20 @@ class DBManager:
                 FOREIGN KEY (run_id) REFERENCES runs(id)
             )
         """)
+        await self._conn.execute("""
+            CREATE TABLE IF NOT EXISTS session_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id INTEGER NOT NULL,
+                env_id TEXT,
+                login_type TEXT,
+                username TEXT,
+                generation INTEGER DEFAULT 1,
+                action TEXT,
+                reason TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (run_id) REFERENCES runs(id)
+            )
+        """)
         await self._conn.commit()
 
     async def execute(self, sql: str, params: dict[str, Any] | None = None) -> aiosqlite.Cursor:
@@ -131,6 +145,20 @@ async def get_db(db_path: str | Path) -> _DBWrapper:
                 status_code INTEGER,
                 body_preview TEXT,
                 duration_ms INTEGER,
+                created_at TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (run_id) REFERENCES runs(id)
+            )
+        """)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS session_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id INTEGER NOT NULL,
+                env_id TEXT,
+                login_type TEXT,
+                username TEXT,
+                generation INTEGER DEFAULT 1,
+                action TEXT,
+                reason TEXT,
                 created_at TEXT DEFAULT (datetime('now')),
                 FOREIGN KEY (run_id) REFERENCES runs(id)
             )
