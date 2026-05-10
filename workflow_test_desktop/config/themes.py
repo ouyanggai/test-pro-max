@@ -66,21 +66,47 @@ THEME_CSS_VAR_MAP = {
 
 
 def build_theme_css(theme: ThemeColors) -> str:
-    """生成 CSS 变量块，300ms 全局过渡用于主题切换"""
-    lines = [":root {"]
-    for css_var, attr in THEME_CSS_VAR_MAP.items():
-        lines.append(f"  --{css_var}: {getattr(theme, attr)};")
-    lines.append("  --transition-theme: 300ms ease;")
-    lines.append("}")
-    lines.append(
-        "*{transition: background-color var(--transition-theme), "
-        "border-color var(--transition-theme), color var(--transition-theme);}"
-    )
-    return "\n".join(lines)
+    """
+    生成 Qt 样式表。Qt 不支持 CSS custom properties，
+    所以直接把颜色值展开进去。
+    """
+    t = theme
+    return f"""
+QWidget {{
+    background-color: {t.bg_primary};
+    color: {t.text_primary};
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", sans-serif;
+    transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
+}}
+QFrame, QLabel, QPushButton, QComboBox, QLineEdit, QTextEdit, QSpinBox {{
+    background-color: {t.bg_card};
+    color: {t.text_primary};
+    border: 1px solid {t.border};
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", sans-serif;
+}}
+QPushButton:hover {{
+    border-color: {t.accent};
+}}
+QPushButton:pressed {{
+    background-color: {t.bg_secondary};
+}}
+QTextEdit, QLineEdit {{
+    background-color: {t.bg_secondary};
+    border: 1px solid {t.border};
+    border-radius: 8px;
+    padding: 6px;
+}}
+QLabel {{
+    background-color: transparent;
+    border: none;
+}}
+"""
 
 
 # 字体规范（系统字体栈，不打包字体）
-FONT_FAMILY = "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif"
+FONT_FAMILY = "system-ui, -apple-system, BlinkMacSystemFont, SF Pro Text, Segoe UI, sans-serif"
 
 # 圆角规范
 RADIUS_BUTTON = "8px"
