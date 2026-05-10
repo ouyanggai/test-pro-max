@@ -19,7 +19,12 @@ def mock_login_func():
 
     async def login(env_id, login_type, username, password):
         call_count["count"] += 1
-        return {"sid": f"sid_{username}_{call_count['count']}", "expires_in": 3600}
+        # 模拟真实 API 响应：{code, message, data: {sid, ...}}
+        return {
+            "code": 0,
+            "message": "ok",
+            "data": {"sid": f"sid_{username}_{call_count['count']}", "expires_in": 3600},
+        }
     return AsyncMock(side_effect=login)
 
 

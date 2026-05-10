@@ -187,7 +187,9 @@ class SessionManager:
             password = self._secrets.get("PASSWORD")
 
         login_result = await self._login_func(env_id, login_type, username, password)
-        sid = login_result.get("sid") or login_result.get("token")
+        # SID 嵌套在 data 字段中
+        data = login_result.get("data", {})
+        sid = data.get("sid") or data.get("token") if isinstance(data, dict) else None
         if not sid:
             raise SessionManagerError(f"登录失败，未获取到 SID: {login_result}")
 
