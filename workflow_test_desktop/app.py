@@ -30,6 +30,7 @@ from workflow_test_desktop.ui.main_window import MainWindow
 def main(env_file_path: str | None = None) -> int:
     """主入口"""
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
     app.setApplicationName("接口回归测试工作台")
 
     # 先加载所有同步配置
