@@ -35,7 +35,6 @@ class FlowCatalogService:
             body["flowGroupId"] = category
 
         resp = await self._http.post(self._config.flow_catalog_path, json=body)
-        resp.raise_for_status()
         resp_data = resp.json()
         records = resp_data.get("data", {}).get("records", []) if isinstance(resp_data, dict) else []
 

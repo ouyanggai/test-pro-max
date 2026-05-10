@@ -178,20 +178,20 @@ class StepFlow(QWidget):
             try:
                 async with ApiClient(gateway) as client:
                     resp = await client.post(
-                        "/api/web/flowTemplateApi/list",
+                        "/web/flowTemplateApi/list",
                         json={"page": 1, "size": 100, "status": "enable"},
                     )
                     data = resp.json()
-                    if data.get("code") == 0:
-                        records = data.get("data", {}).get("records", [])
-                        self._set_loaded(records)
-                    elif data.get("isSuccess") is False:
+                    if data.get("isSuccess") is False:
                         ErrorBus().emit(
                             "加载流程失败",
                             data.get("message", "接口返回错误"),
                             source="StepFlow",
                         )
                         self._set_loaded([])
+                    elif data.get("code") == 0:
+                        records = data.get("data", {}).get("records", [])
+                        self._set_loaded(records)
             except ApiError as e:
                 ErrorBus().emit("加载流程失败", e.message, detail=e.detail, source="StepFlow")
                 self._set_loaded([])

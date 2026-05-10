@@ -1,4 +1,10 @@
-"""HTTP API 客户端封装（httpx.AsyncClient）"""
+"""HTTP API 客户端封装（httpx.AsyncClient）
+
+对标 invest 前端 src/utils/axios.js：
+- baseURL + path 直接拼接（如 baseURL=/api + path=/web/user/...）
+- SID 作为 URL query param ?sid=xxx&platformCode=xxx 和 header sid: xxx 双重发送
+- 响应格式：{ isSuccess, data, message } 或 { code, data, message }
+"""
 from __future__ import annotations
 
 import httpx
@@ -31,6 +37,7 @@ class ApiResponse:
     API 响应包装器。
     - 自动解析 JSON，失败时抛 ApiError
     - 自动检查 HTTP 状态码，非 2xx 抛 ApiError
+    - 同时检查 isSuccess / code 业务状态码
     """
 
     def __init__(self, resp: httpx.Response, path: str):
@@ -93,14 +100,27 @@ class ApiResponse:
 
         return self._data
 
+    @property
+    def status_code(self) -> int:
+        """直接暴露 HTTP 状态码（供 recorder / executor 使用）"""
+        return self._resp.status_code
+
+    @property
+    def text(self) -> str:
+        """直接暴露原始响应文本（供 recorder 使用）"""
+        return self._resp.text
+
 
 class ApiClient:
-    """统一的异步 HTTP 客户端"""
+    """统一的异步 HTTP 客户端（对标 invest 前端 axios）"""
 
     def __init__(self, base_url: str, timeout: float = 30.0, sid: str = ""):
+        # base_url = "http://192.168.1.220:38081/api"
+        # path = "/web/user/api/..." → 完整 URL = base_url + path
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
         self._sid = sid
+        self._platform_code = "200001"
         self._client: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> ApiClient:
@@ -118,8 +138,23 @@ class ApiClient:
     def set_sid(self, sid: str) -> None:
         self._sid = sid
 
+    def set_platform_code(self, code: str) -> None:
+        self._platform_code = code
+
+    def _build_url(self, path: str, params: dict | None) -> tuple[str, dict]:
+        """构造完整 URL，SID 注入到 query params（对标 axios interceptor）"""
+        url = path
+        q = dict(params) if params else {}
+        if self._sid:
+            # SID 作为 URL query param，对标 invest 前端:
+            # url = `${url}?sid=${sid}&platformCode=${platformCode}`
+            q["sid"] = self._sid
+            q["platformCode"] = self._platform_code
+        return url, q
+
     async def _headers(self, extra: dict | None) -> dict:
-        h = {"Content-Type": "application/json"}
+        """请求头，SID 也放在 header 中（对标 axios interceptor）"""
+        h: dict[str, str] = {"Content-Type": "application/json"}
         if self._sid:
             h["sid"] = self._sid
         if extra:
@@ -134,9 +169,10 @@ class ApiClient:
     ) -> ApiResponse:
         if not self._client:
             raise RuntimeError("ApiClient not entered")
+        url, q = self._build_url(path, params)
         resp = await self._client.get(
-            path,
-            params=params,
+            url,
+            params=q,
             headers=await self._headers(headers),
         )
         return ApiResponse(resp, path)
@@ -150,10 +186,12 @@ class ApiClient:
     ) -> ApiResponse:
         if not self._client:
             raise RuntimeError("ApiClient not entered")
+        url, q = self._build_url(path, None)
         resp = await self._client.post(
-            path,
+            url,
             json=json,
             data=data,
+            params=q,
             headers=await self._headers(headers),
         )
         return ApiResponse(resp, path)
@@ -166,9 +204,11 @@ class ApiClient:
     ) -> ApiResponse:
         if not self._client:
             raise RuntimeError("ApiClient not entered")
+        url, q = self._build_url(path, None)
         resp = await self._client.put(
-            path,
+            url,
             json=json,
+            params=q,
             headers=await self._headers(headers),
         )
         return ApiResponse(resp, path)
@@ -180,8 +220,10 @@ class ApiClient:
     ) -> ApiResponse:
         if not self._client:
             raise RuntimeError("ApiClient not entered")
+        url, q = self._build_url(path, None)
         resp = await self._client.delete(
-            path,
+            url,
+            params=q,
             headers=await self._headers(headers),
         )
         return ApiResponse(resp, path)

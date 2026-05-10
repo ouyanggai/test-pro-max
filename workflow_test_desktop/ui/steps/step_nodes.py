@@ -116,15 +116,20 @@ class StepNodes(QWidget):
             try:
                 async with ApiClient(gateway) as client:
                     resp = await client.post(
-                        "/api/web/flowTemplateApi/detail",
+                        "/web/flowTemplateApi/findById",
                         json={"id": flow_id},
                     )
                     data = resp.json()
-                    if data.get("code") == 0:
+                    if data.get("isSuccess") is False:
+                        ErrorBus().emit(
+                            "加载节点失败",
+                            data.get("message", "接口返回错误"),
+                            source="StepNodes",
+                        )
+                    elif data.get("code") == 0:
                         nodes = data.get("data", {}).get("flowNodeList", [])
                         self._shared_data["_flow_detail"] = data.get("data", {})
                         self._set_nodes(nodes)
-                    elif data.get("isSuccess") is False:
                         ErrorBus().emit(
                             "加载节点失败",
                             data.get("message", "接口返回错误"),

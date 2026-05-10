@@ -118,20 +118,21 @@ class StepAccount(QWidget):
             try:
                 async with ApiClient(gateway) as client:
                     resp = await client.post(
-                        "/api/web/user/api/user/list",
-                        json={"page": 1, "size": 200, "keyword": ""},
+                        "/web/user/api/user/findByCompanyIdUserList",
+                        json={"page": 1, "size": 200},
                     )
                     data = resp.json()
-                    if data.get("code") == 0:
-                        records = data.get("data", {}).get("records", [])
-                        self._all_users = records
-                        self._populate_combo("")
-                    elif data.get("isSuccess") is False:
+                    # 对标 invest 前端：优先检查 isSuccess，其次检查 code
+                    if data.get("isSuccess") is False:
                         ErrorBus().emit(
                             "加载账号失败",
                             data.get("message", "接口返回错误"),
                             source="StepAccount",
                         )
+                    else:
+                        records = data.get("data", {}).get("records", [])
+                        self._all_users = records
+                        self._populate_combo("")
             except ApiError as e:
                 ErrorBus().emit(
                     "加载账号失败",

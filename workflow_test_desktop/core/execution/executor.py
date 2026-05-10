@@ -130,12 +130,12 @@ class NodeExecutor:
                 duration_ms=duration_ms,
             )
 
-            # 步骤6：判断成功
+            # 步骤6：判断成功（对标 invest 前端：isSuccess 或 code==0）
             success = response_status == 200
             if resp is not None:
                 try:
                     body_json = resp.json()
-                    success = body_json.get("code", -1) == 0
+                    success = body_json.get("isSuccess") is not False and body_json.get("code", -1) == 0
                 except Exception:
                     pass
 

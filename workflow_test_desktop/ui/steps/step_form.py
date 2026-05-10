@@ -114,17 +114,22 @@ class StepForm(QWidget):
             try:
                 async with ApiClient(gateway) as client:
                     resp = await client.post(
-                        "/api/web/flowTemplateApi/detail",
+                        "/web/flowTemplateApi/findById",
                         json={"id": flow_id},
                     )
                     data = resp.json()
-                    if data.get("code") == 0:
+                    if data.get("isSuccess") is False:
+                        ErrorBus().emit(
+                            "加载表单失败",
+                            data.get("message", "接口返回错误"),
+                            source="StepForm",
+                        )
+                    elif data.get("code") == 0:
                         form_config = data.get("data", {}).get("formConfig", [])
                         if not form_config:
                             form_config = data.get("data", {}).get("formConfigList", [])
                         self._shared_data["_flow_detail"] = data.get("data", {})
                         self._build_form(form_config)
-                    elif data.get("isSuccess") is False:
                         ErrorBus().emit(
                             "加载表单失败",
                             data.get("message", "接口返回错误"),

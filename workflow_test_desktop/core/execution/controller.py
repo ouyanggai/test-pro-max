@@ -139,7 +139,11 @@ class ExecutionController:
         }
         resp = await self._http.post(self.SUBMIT_PATH, json=request_body)
         body = resp.json()
-        if body.get("code") != 0:
+        # 对标 invest 前端：isSuccess === false 时报错
+        if body.get("isSuccess") is False:
+            raise RuntimeError(f"提交流程失败: {body.get('message', '')}")
+        # 部分接口用 code: 0 表示成功
+        if "code" in body and body.get("code") != 0:
             raise RuntimeError(f"提交流程失败: {body}")
         flow_instance_id = body.get("data", {}).get("flowInstanceId")
         if not flow_instance_id:
@@ -159,7 +163,10 @@ class ExecutionController:
             json={"flowInstanceId": flow_instance_id},
         )
         body = resp.json()
-        if body.get("code") != 0:
+        # 对标 invest 前端：isSuccess === false 时仅警告不断言
+        if body.get("isSuccess") is False:
+            logger.warning(f"查找待办失败: {body.get('message', '')}")
+        if "code" in body and body.get("code") != 0:
             logger.warning(f"查找待办失败: {body}")
             return []
         data = body.get("data", {})

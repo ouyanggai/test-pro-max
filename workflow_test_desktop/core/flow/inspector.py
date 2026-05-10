@@ -36,7 +36,6 @@ class FlowInspector:
             self._config.flow_detail_path,
             json={"id": flow_id},
         )
-        resp.raise_for_status()
         raw = resp.json()
         data = raw.get("data", raw) if isinstance(raw, dict) else raw
 
