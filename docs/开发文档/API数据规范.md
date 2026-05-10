@@ -2,7 +2,7 @@
 
 > 本文档是接口编排自动化测试工具的**唯一 API 数据源**。所有层（Session、Flow、Assignment、Execution）的实现必须严格遵循本文档的路由和字段定义。
 >
-> 规范来源：Apifox MCP 查询 + 流程引擎生命周期文档
+> 规范来源：真实 curl 抓包 + Apifox MCP 查询 + 流程引擎生命周期文档
 
 ---
 
@@ -11,12 +11,28 @@
 ### 1.1 请求格式
 
 - 所有接口均为 **POST** + JSON body（`Content-Type: application/json`）
-- 鉴权方式：`X-SID` 请求头（登录后由 SessionManager 注入）
-- 公共请求头：
-  ```
-  X-SID: {sid}
-  Content-Type: application/json
-  ```
+- **URL 前缀**：`http://{gateway}/api/web/{模块}/{接口路径}`
+
+**SID 传递（三处必须全部传递）**：
+
+```
+http://{host}/api/web/{module}/{path}?sid={sid}&platformCode={platformCode}&unStatistics=1
+```
+
+请求体包装格式：
+```json
+{
+  "data": { ...actual_request_body... },
+  "sid": "{sid}",
+  "projectId": ""
+}
+```
+
+HTTP Header 也需传递：
+```
+Content-Type: application/json
+sid: {sid}
+```
 
 ### 1.2 响应格式
 
@@ -50,6 +66,21 @@
   }
 }
 ```
+
+### 1.3 接口域划分
+
+| 域 | URL 前缀 | 说明 |
+|----|---------|------|
+| 运行端 | `/api/web/plan/` | 计划/待办相关（getPlanCountByUser 等） |
+| 配置端 | `/api/web/` | 流程模板、用户管理等 |
+| 流程实例 | `/api/web/flowInstanceApi/` | 流程实例操作 |
+| 任务节点 | `/api/web/flowJobTaskLink/` | 任务节点关联 |
+
+### 1.4 固定参数
+
+- `platformCode` — 固定值（如 `200001`），从环境配置获取
+- `customerCode` — 固定值（如 `d4036cc6581141a8b13cf39387c8d6f2`），从环境配置获取
+- `unStatistics` — 固定 `1`
 
 ---
 
