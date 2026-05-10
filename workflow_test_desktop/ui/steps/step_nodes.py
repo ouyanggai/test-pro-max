@@ -109,13 +109,14 @@ class StepNodes(QWidget):
 
         # 否则从 API 加载
         async def _fetch():
+            from workflow_test_desktop.api.client import ApiError
             gateway = self._config.gateway_url
             if not gateway:
                 return
             try:
                 async with ApiClient(gateway) as client:
                     resp = await client.post(
-                        "/web/flowTemplateApi/detail",
+                        "/api/web/flowTemplateApi/detail",
                         json={"id": flow_id},
                     )
                     data = resp.json()
@@ -123,18 +124,16 @@ class StepNodes(QWidget):
                         nodes = data.get("data", {}).get("flowNodeList", [])
                         self._shared_data["_flow_detail"] = data.get("data", {})
                         self._set_nodes(nodes)
-                    else:
+                    elif data.get("isSuccess") is False:
                         ErrorBus().emit(
                             "加载节点失败",
-                            data.get("message", "未知错误"),
+                            data.get("message", "接口返回错误"),
                             source="StepNodes",
                         )
+            except ApiError as e:
+                ErrorBus().emit("加载节点失败", e.message, detail=e.detail, source="StepNodes")
             except Exception as e:
-                ErrorBus().emit(
-                    "加载节点失败",
-                    str(e),
-                    source="StepNodes",
-                )
+                ErrorBus().emit("加载节点失败", str(e), source="StepNodes")
 
         def _run():
             try:

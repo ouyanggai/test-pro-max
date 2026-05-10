@@ -169,38 +169,34 @@ class StepFlow(QWidget):
         self._refresh_btn.setEnabled(False)
 
         async def _fetch():
+            from workflow_test_desktop.api.client import ApiError
             gateway = self._config.gateway_url
             if not gateway:
-                ErrorBus().emit(
-                    "配置错误",
-                    "GATEWAY_URL 未配置",
-                    source="StepFlow",
-                )
+                ErrorBus().emit("配置错误", "GATEWAY_URL 未配置", source="StepFlow")
                 self._set_loaded([])
                 return
             try:
                 async with ApiClient(gateway) as client:
                     resp = await client.post(
-                        "/web/flowTemplateApi/list",
+                        "/api/web/flowTemplateApi/list",
                         json={"page": 1, "size": 100, "status": "enable"},
                     )
                     data = resp.json()
                     if data.get("code") == 0:
                         records = data.get("data", {}).get("records", [])
                         self._set_loaded(records)
-                    else:
+                    elif data.get("isSuccess") is False:
                         ErrorBus().emit(
                             "加载流程失败",
-                            data.get("message", "未知错误"),
+                            data.get("message", "接口返回错误"),
                             source="StepFlow",
                         )
                         self._set_loaded([])
+            except ApiError as e:
+                ErrorBus().emit("加载流程失败", e.message, detail=e.detail, source="StepFlow")
+                self._set_loaded([])
             except Exception as e:
-                ErrorBus().emit(
-                    "加载流程失败",
-                    str(e),
-                    source="StepFlow",
-                )
+                ErrorBus().emit("加载流程失败", str(e), source="StepFlow")
                 self._set_loaded([])
 
         def _run():

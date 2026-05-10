@@ -108,31 +108,38 @@ class StepAccount(QWidget):
 
     def _load_users_from_api(self):
         """从 API 加载用户列表用于模糊匹配"""
+        from workflow_test_desktop.api.client import ApiError
+
         async def _fetch():
             gateway = self._config.gateway_url
             if not gateway:
-                logger.warning("[StepAccount] GATEWAY_URL 未配置，跳过加载用户列表")
+                ErrorBus().emit("配置错误", "GATEWAY_URL 未配置", source="StepAccount")
                 return
             try:
                 async with ApiClient(gateway) as client:
                     resp = await client.post(
-                        "/web/user/api/user/list",
+                        "/api/web/user/api/user/list",
                         json={"page": 1, "size": 200, "keyword": ""},
                     )
                     data = resp.json()
                     if data.get("code") == 0:
                         records = data.get("data", {}).get("records", [])
                         self._all_users = records
-                        logger.info(f"[StepAccount] 加载到 {len(records)} 个用户")
                         self._populate_combo("")
-                    else:
+                    elif data.get("isSuccess") is False:
                         ErrorBus().emit(
                             "加载账号失败",
-                            data.get("message", "未知错误"),
+                            data.get("message", "接口返回错误"),
                             source="StepAccount",
                         )
+            except ApiError as e:
+                ErrorBus().emit(
+                    "加载账号失败",
+                    e.message,
+                    detail=e.detail,
+                    source="StepAccount",
+                )
             except Exception as e:
-                logger.exception("[StepAccount] 加载用户列表异常")
                 ErrorBus().emit(
                     "加载账号失败",
                     str(e),

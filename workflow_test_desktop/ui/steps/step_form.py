@@ -106,18 +106,15 @@ class StepForm(QWidget):
         self._empty_hint.setVisible(False)
 
         async def _fetch():
+            from workflow_test_desktop.api.client import ApiError
             gateway = self._config.gateway_url
             if not gateway:
-                ErrorBus().emit(
-                    "配置错误",
-                    "GATEWAY_URL 未配置",
-                    source="StepForm",
-                )
+                ErrorBus().emit("配置错误", "GATEWAY_URL 未配置", source="StepForm")
                 return
             try:
                 async with ApiClient(gateway) as client:
                     resp = await client.post(
-                        "/web/flowTemplateApi/detail",
+                        "/api/web/flowTemplateApi/detail",
                         json={"id": flow_id},
                     )
                     data = resp.json()
@@ -125,21 +122,18 @@ class StepForm(QWidget):
                         form_config = data.get("data", {}).get("formConfig", [])
                         if not form_config:
                             form_config = data.get("data", {}).get("formConfigList", [])
-                        # 同时缓存节点信息供 StepNodes 使用
                         self._shared_data["_flow_detail"] = data.get("data", {})
                         self._build_form(form_config)
-                    else:
+                    elif data.get("isSuccess") is False:
                         ErrorBus().emit(
                             "加载表单失败",
-                            data.get("message", "未知错误"),
+                            data.get("message", "接口返回错误"),
                             source="StepForm",
                         )
+            except ApiError as e:
+                ErrorBus().emit("加载表单失败", e.message, detail=e.detail, source="StepForm")
             except Exception as e:
-                ErrorBus().emit(
-                    "加载表单失败",
-                    str(e),
-                    source="StepForm",
-                )
+                ErrorBus().emit("加载表单失败", str(e), source="StepForm")
 
         def _run():
             try:
